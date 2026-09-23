@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="sv"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net; worker-src 'self'; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: https://tile.openstreetmap.org https://cantharellus-historical.erik-d93.workers.dev https://tiles.maps.eox.at https://server.arcgisonline.com https://geodataservice.skogsstyrelsen.se https://unpkg.com; connect-src 'self' https://geodata.naturvardsverket.se https://api.sgu.se https://api.open-meteo.com https://opendata-download-metfcst.smhi.se https://cantharellus-historical.erik-d93.workers.dev https://geodataservice.skogsstyrelsen.se https://tiles.maps.eox.at https://api.what3words.com; manifest-src 'self'; base-uri 'none'; form-action 'none'">
+<title>Cantharellus Cibarius</title>
+<meta name="theme-color" content="#080a08">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="./styles.css?v=2026-09-23.9">
+<link rel="stylesheet" href="./layers.css?v=2026-09-23.9">
+<link rel="stylesheet" href="./location.css?v=2026-09-23.9">
+</head><body>
+<main>
+<section class="workspace" aria-label="Karta med områdesanalys">
+<div class="map-wrap v2"><div id="map" role="region" aria-label="Karta. Flytta och zooma för analys av rutan i mitten."></div></div>
+
+<div class="map-meta">
+  <div class="meta-left">
+    <strong id="dimensions">1 × 1 km · Prognosruta 50 × 50 m</strong>
+    <span id="analysisStatus" role="status">Zooma in mot rutan för analys.</span>
+    <span id="searchStatus" class="status" role="status"></span>
+  </div>
+  <div class="map-actions">
+    <button id="findHigh" class="legend-find" title="Sök närmaste ruta med stor indikation">Hitta stor</button>
+    <button id="findVeryHigh" class="primary legend-find" title="Sök närmaste ruta med mycket stor indikation">Hitta mycket stor</button>
+    <button id="retry" hidden>Försök igen</button>
+  </div>
+</div>
+<p id="mapError" class="map-error" role="status" hidden></p>
+
+<div class="legend"><strong>Indikation</strong><span><i class="swatch very-high"></i>Mycket stor</span><span><i class="swatch high"></i>Stor</span><span><i class="swatch promising"></i>Lovande</span><span><i class="swatch possible"></i>Möjlig</span><span><i class="swatch low"></i>Svag</span></div>
+
+<div class="panels">
+<details class="panel" id="panel-layers" open>
+  <summary>Kartlager · alla med multiply <span class="chev">▾</span></summary>
+  <div class="panel-body">
+    <div id="historicalPanelHost"></div>
+    <div id="sentinelPanelHost"></div>
+    <div id="sentinel2PanelHost" hidden></div>
+    <div id="mapLayers"></div>
+  </div>
+</details>
+<details class="panel" id="panel-position">
+  <summary>Position <span class="chev">▾</span></summary>
+  <div class="panel-body">
+    <div class="position-tools">
+      <button id="locate">Visa min position</button>
+      <button id="recenter" disabled>Till min position</button>
+      <button id="compass" disabled>Aktivera kompass</button>
+    </div>
+    <p id="locationStatus" class="status"></p><p id="compassStatus" class="status"></p>
+  </div>
+</details>
+</div>
+
+<div class="below-map">
+<section class="assessment">
+  <div class="eyebrow">Skogen i fokus</div>
+  <h2 id="areaName">Området i rutan</h2>
+  <span class="potential" id="potential">Väntar på analys</span>
+  <div class="area-list" id="areaList"></div>
+  <dl class="facts">
+    <div><dt>Skogstyp · NMD2023</dt><dd id="forest">Inte hämtat</dd></div>
+    <div><dt>Jordart · SGU</dt><dd id="soil">Inte hämtat</dd></div>
+    <div><dt>Markförhållanden</dt><dd id="moisture">Inte hämtat</dd></div>
+    <div><dt>Avverkning · Skogsstyrelsen</dt><dd id="felling">Inte hämtat</dd></div>
+    <div><dt>Skogens struktur</dt><dd id="structure">Inte hämtat</dd></div>
+  </dl>
+  <p class="reason" id="reason"></p>
+  <div class="weather"><strong>Vädrets bidrag</strong><p id="weather"></p><p id="forecast"></p></div>
+  <div class="nav-links" id="navLinks" hidden>
+    <strong>Navigera till Kantarellställe</strong>
+    <p class="nav-coords" id="navCoords"></p>
+    <div class="nav-buttons">
+      <a id="appleMapsLink" class="nav-btn apple" href="#" target="_blank" rel="noopener">Öppna i Apple Maps</a>
+      <a id="googleMapsLink" class="nav-btn google" href="#" target="_blank" rel="noopener">Öppna i Google Maps</a>
+    </div>
+    <div class="w3w-block">
+      <a id="w3wLink" class="nav-btn w3w" href="#" target="_blank" rel="noopener">Öppna i what3words</a>
+      <span id="w3wWords" class="w3w-words"></span>
+    </div>
+  </div>
+  <details><summary>Hämtning och källor</summary><ul id="sourceStatus" class="source-list"></ul></details>
+</section>
+
+
+<section class="guide" id="guide">
+  <p class="eyebrow">I skogen</p>
+  <h2>Råd kring letandet av kantareller</h2>
+  <div class="guide-grid">
+  <article><h3>Leta ljus, inte mörker</h3><p>Gallrad skog där solen når marken ger varmare mark och mer kantarell. Leta gläntor, luckor och gles skugga.</p><p>I tät mörk granskog blir marken kall och förnan tjock – kantarellen trivs dåligt. Gå dit krontaket är glesare. Du ser det som solfläckar som flyttar sig, som att det är varmare om fötterna och att blåbärsriset är lågt och tätt. En bra ficka är ofta 20-40 meter bred där ljuset når. På kartan syns detta som ljusare partier i flygbild och som ojämnt krontak i Copernicus. Ställ dig med ryggen mot solen och titta snett in i luckan – gula hattar lyser då mot skuggan.</p></article>
+
+  <article><h3>Frisk mark med stråk</h3><p>Lagom fukt, inte blött. Lingon, blåbär och lite mossa är bättre än vitmossa och kärr.</p><p>Kantarell vill ha frisk mark med små fuktstråk, inte sur blöta. Känn efter: mossan ska vara mjuk men inte kramvatten, förnan tunn. Ser du lingon och kruståtel är du ofta rätt. Ser du bara vitmossa och vattenklöver – gå vidare. I sluttningar letar du strax nedanför krönet där vattnet saktar in. På kartan kan du se markfuktighet som frisk och frisk-fuktig – där, i övergången mellan torrare och fuktigare, står ofta kantarellerna på rad.</p></article>
+
+  <article><h3>Lagom gammal skog</h3><p>40-80 år, ofta gran med inslag av björk, bok eller ek. För ung och tät blir det för mörkt.</p><p>I plantskog under 20 år är det för mörkt och förnan för tjock. I riktigt gammal orörd granskog blir marken också sur. Bästa är medelålders skog som gallrats en gång, där stammarna är lagom glesa och marken fått ljus några år. Du ser det som att du kan gå mellan träden utan att tränga dig, och att blåbärsriset kommit tillbaka efter gallringen. På kartan syns skogstyp via NMD och trädhöjd, men lita mer på ögat i fält: kan du se 15-25 meter in i skogen – då är det lagom.</p></article>
+
+  <article><h3>Kanter och diken</h3><p>Vägar, stigar, diken och bäckar ger mer ljus och mer rörelse i vattnet.</p><p>Kantarellen älskar kanter. Gå 5-15 meter in från en skogsbilväg, en stig eller ett dike. Där får skogen mer ljus från sidan och lite extra vatten när det regnat. Samma längs bäckar – inte nere i blötan, utan på första torra kanten ovanför. Ett klassiskt knep: gå längs en väg, stanna var 30:e meter och gå 20 meter in i skogen och tillbaka. På kartan ser du vägarna i OSM och vatten i hydrografi – markera en ruta där en väg möter ett fuktstråk, där är chansen hög.</p></article>
+
+  <article><h3>Jordarten spelar roll</h3><p>Sandig-moig morän är bäst. Styv lera eller ren torv är sämre.</p><p>Stick ner kniven: morän är lite grusig, lite sandig, lätt att gräva i och inte kladdig. Det är kantarelljord. Ren lera som kletar fast på stöveln och ren torv som gungar är oftast sämre. På kartan ser du SGU jordart – leta efter morän, gärna isälvssediment i närheten. I skogen känner du det på att marken är fast att gå på, lite småstenig och att det växer både blåbär och lingon om vartannat.</p></article>
+
+  <article><h3>Efter regn och värme</h3><p>4-7 dagar efter ordentligt regn när det blivit varmt igen är bästa fönstret.</p><p>Kantarell behöver fukt och värme. Kolla vädret i rutan: 20-40 mm över 14 dagar och dygnsmedel över 13-15 grader ger fart. Första gula kommer ofta 4-7 dagar efter ett riktigt regn när värmen kommit tillbaka. Gå inte när det är torrt och kallt. Gå när det är kvavt, när myggorna står stilla och när skogen doftar jord. På kartan ser du 14-dagars regn och prognos – är det grönt i rutan och det regnat i veckan, åk ut.</p></article>
+
+  <article><h3>Gå i sicksack, inte rakt</h3><p>Många går på stigen. Täck en ficka på 30×30 m ordentligt istället för 500 m stig.</p><p>Tricket för dig som går sällan: välj en lovande yta och gå i sicksack. Gå 10 meter åt sidan, vänd, tillbaka i nytt spår. Titta inte rakt ner utan 2-4 meter framför. Ställ timer på 15 minuter och håll dig inom samma ficka. Du hittar 10 gånger mer än om du går långt på en stig. På kartan: zooma till 20×20 m-rutor och välj en som står som Lovande eller Stor – håll dig inom den rutan och gå sicksack där.</p></article>
+
+  <article><h3>Lär ögat hitta gult mot brunt</h3><p>Leta inte efter hel svamp, leta efter en gul kant som lyfter riset.</p><p>Kantarell är matt gul, nästan som en gulbrun lövhög. Den lyser inte. Knepet är att sitta på huk där snedljus faller in och titta efter något som bryter mönstret – en liten kulle i blåbärsriset, en gul linje i kanten av förnan. Gå ner på knä var 10:e meter och titta i ögonhöjd med riset. Öva: lägg en gul lapp i riset och gå 5 meter bort, så ser du hur lite som syns.</p></article>
+
+  <article><h3>Känn doften och värmekartan</h3><p>Gå när det luktar skog och är kvavt. Där mossan är mjuk men inte blöt står de.</p><p>För sällanplockaren är näsan bättre än ögat. Kantarell luktar aprikos när du kommer nära, och skogen luktar jord och svamp när det är dags. Gå dit det är varmt om kinderna i gläntan, där myggorna står stilla och där marken känns ljummen. Kall, dragig, blöt mark – gå vidare. På kartan kan du tänka värmekarta: södersluttning, lucka, morän och frisk mark i kombination är varmast. Ställ dig där och vänta 30 sekunder, låt ögat vänja sig – då ser du ofta första gula inom 5 meter.</p></article>
+  </div>
+</section>
+
+</div>
+</section>
+</main>
+<footer class="reading-width v2footer"><p class="fine">CantharellusCibarius · 2026-09-23.9</p></footer>
+<dialog id="consent"><h2>Visa din position?</h2><p>Position används lokalt. Inget sparas.</p><div class="actions"><button id="allow" class="primary">Aktivera</button><button id="decline">Utan</button></div></dialog>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="https://unpkg.com/proj4@2.8.0/dist/proj4.js"></script>
+<script src="./model.js?v=2026-09-23.9"></script>
+<script src="./sources.js?v=2026-09-23.9"></script>
+<script src="./layers.js?v=2026-09-23.9"></script>
+<script src="./location.js?v=2026-09-23.9"></script>
+<script src="./app.js?v=2026-09-23.9"></script>
+</body></html>
