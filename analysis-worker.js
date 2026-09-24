@@ -1,6 +1,6 @@
 // Geometry and up to 10,000 predictions run off the UI thread. v20261002.0
 importScripts('./vendor/proj4.js', './model.js?v=20261002.0');
-proj4.defs('EPSG:3006', '+proj=utm +zone=33 +ellps=GRS80 +units=m +no_defs');
+proj4.defs('EPSG:3006','+proj=utm +zone=33 +ellps=GRS80 +units=m +no_defs');
 const toGeo = point => proj4('EPSG:3006','EPSG:4326',point);
 function bounds(geometry) {
   let w=Infinity,s=Infinity,e=-Infinity,n=-Infinity;
